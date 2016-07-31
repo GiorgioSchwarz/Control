@@ -23,6 +23,7 @@ class AppControllerTest extends \PHPUnit_Framework_TestCase
 		$this->commandResolver = new CommandResolver($this->commandsMap, $this->commandsFactory);
 		
 		$this->middleware = $this->createMock(Middleware::class);
+
 		$this->commandMiddleware = new CommandMiddleware($this->commandsMap);
 		$this->commandMiddleware->register('auth', $this->middleware);
 		
@@ -54,7 +55,7 @@ class AppControllerTest extends \PHPUnit_Framework_TestCase
 			->command('CommandWithDefaultForward')
 				->on('CMD_DEFAULT', '@CommandWithDefaultView')
 			->command('CommandWithQualifiedForward')
-				->on('CMD_OK', '@CommandWithDefaultView')
+				->on('CMD_OK', '@CommandWithQualifiedView')
 			->command('CommandWithDefaultView')
 				->on('CMD_DEFAULT', 'default.view')
 			->command('CommandWithQualifiedView')
@@ -133,7 +134,7 @@ class AppControllerTest extends \PHPUnit_Framework_TestCase
 	/** @test */
 	public function it_executes_a_command_and_returns_command_default_views()
 	{
-		$this->commandWillReturn('CommandWithDefaultView', 'CMD_DEFAULT');
+		$this->commandWillReturn('CommandWithDefaultView', 'CMD_ERROR');
 
 		$appController = new AppController($this->commandResolver, $this->middlewareController);
 		
@@ -159,7 +160,7 @@ class AppControllerTest extends \PHPUnit_Framework_TestCase
 	/** @test */
 	public function it_executes_a_command_and_its_default_forward()
 	{
-		$this->commandWillReturn('CommandWithDefaultForward', 'CMD_DEFAULT');
+		$this->commandWillReturn('CommandWithDefaultForward', 'CMD_OK');
 		$this->commandWillReturn('CommandWithDefaultView', 'CMD_DEFAULT');
 
 		$appController = new AppController($this->commandResolver, $this->middlewareController);
@@ -174,14 +175,27 @@ class AppControllerTest extends \PHPUnit_Framework_TestCase
 	public function it_executes_a_command_and_its_qualified_forward()
 	{
 		$this->commandWillReturn('CommandWithQualifiedForward', 'CMD_OK');
-		$this->commandWillReturn('CommandWithDefaultView', 'CMD_DEFAULT');
+		$this->commandWillReturn('CommandWithQualifiedView', 'CMD_ERROR');
 
 		$appController = new AppController($this->commandResolver, $this->middlewareController);
 		
 		$appController->executeCommandsChain('CommandWithQualifiedForward');
 
 		$this->assertEquals(2, $appController->getExecutedCommandsCount());
-		$this->assertEquals(['default.view'], $appController->getQualifiedViews());
+		$this->assertEquals(['qualified.view'], $appController->getQualifiedViews());
+	}
+
+	/** @test */
+	public function it_executes_a_command_with_alias_and_displays_qualified_view()
+	{
+		$this->commandWillReturn('CommandWithAlias', 'CMD_OK');
+		
+		$appController = new AppController($this->commandResolver, $this->middlewareController);
+		
+		$appController->executeCommandsChain('CommandWithAlias');
+
+		$this->assertEquals(1, $appController->getExecutedCommandsCount());
+		$this->assertEquals(['alias.view'], $appController->getQualifiedViews());
 	}
 
 	/** @test */
@@ -264,19 +278,6 @@ class AppControllerTest extends \PHPUnit_Framework_TestCase
 
 		$this->assertEquals(0, $appController->getExecutedCommandsCount());
 		$this->assertEquals(['default.signin'], $appController->getQualifiedViews());
-	}
-
-	/** @test */
-	public function it_executes_a_command_with_alias_and_displays_qualified_view()
-	{
-		$this->commandWillReturn('CommandWithAlias', 'CMD_OK');
-		
-		$appController = new AppController($this->commandResolver, $this->middlewareController);
-		
-		$appController->executeCommandsChain('CommandWithAlias');
-
-		$this->assertEquals(1, $appController->getExecutedCommandsCount());
-		$this->assertEquals(['alias.view'], $appController->getQualifiedViews());
 	}
 
 	// ! Utility methods
