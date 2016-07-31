@@ -24,22 +24,17 @@ abstract class AbstractCommand implements CommandInterface
 
 	abstract protected function doExecute();
 	
-	public function getCommandStatuses()
-	{
-		return $this->commandStatuses;
-	}
-
 	public function getStatus()
 	{
 		return $this->status;
 	}
 	
-	public function setStatus($status)
+	private function setStatus($status)
 	{
 		$this->status = $status;
 	}
 	
-	public function statuses($str = 'CMD_DEFAULT')
+	protected function statuses($str = 'CMD_DEFAULT')
 	{
 		if (empty($str)) {
 			$str = 'CMD_DEFAULT';

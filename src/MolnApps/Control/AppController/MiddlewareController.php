@@ -22,6 +22,11 @@ class MiddlewareController
 
 	public function authorize($commandName)
 	{
+		$commandMiddleware = $this->commandsMap->getMiddleware($commandName);
+		if ($commandMiddleware && ! $this->commandsMiddleware) {
+			throw new \Exception('The command ['.$commandName.'] has ['.implode(', ', $commandMiddleware).'] middleware but no CommandMiddleware has been passed.');
+		}
+
 		if ( ! $this->commandsMiddleware) {
 			return true;
 		}
